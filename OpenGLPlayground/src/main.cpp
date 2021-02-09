@@ -24,11 +24,6 @@ struct Point
 	float xCoord;
 	float yCoord;
 	float color[3];
-	/*Point(float xCoord, float yCoord)
-	{
-		this->xCoord = xCoord;
-		this->yCoord = yCoord;
-	}*/
 };
 Point point;
 std::vector<Point> points;
@@ -39,10 +34,17 @@ public:
 	std::vector<Point> linePoints;
 };
 Line line;
-//std::vector<Line> lineList;
 
+class Triangle
+{
+public:
+	float vertexArray[6];
+	float color[3];
+};
+Triangle triangle;
+int numberOfVertices;
+std::vector<Triangle> triangleList;
 
-#pragma region Quads
 //Quad structure
 class Quad
 {
@@ -51,30 +53,16 @@ public:
 	float quadEnd[2];
 	float color[3];
 };
-
 Quad quad;
 std::vector<Quad> quadList;
 int numberOfQuadInputs = 0;
-#pragma endregion
 
 class Poly
 {
 public:
 	std::vector<Point> polygonVertices;
 };
-
 Poly polygon;
-
-class Triangle
-{
-public:
-	float vertexArray[6];
-	float color[3];
-};
-
-Triangle triangle;
-int numberOfVertices;
-std::vector<Triangle> triangleList;
 
 void CreatePoint(Point point)
 {
@@ -97,7 +85,6 @@ void CreateLine(Line line)
 	{
 		glVertex2f(mousePos[0], mousePos[1]);
 	}
-	//glVertex2fv(mousePos);
 	glEnd();
 }
 
@@ -146,52 +133,16 @@ void drawCursor()
 	glPointSize(1.0f);
 }
 
-void display(void)
+void drawAllPoints()
 {
-	glClearColor(1.0, 1.0, 1.0, 0.0);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	glColor3fv(color);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	glLineWidth(lineWidth);
-
-	if (numberOfQuadInputs == 1)
-	{
-		glBegin(GL_LINE_STRIP);
-		glVertex2f(quad.quadOrigin[0], quad.quadOrigin[1]);//(x,y)
-		glVertex2f(mousePos[0], quad.quadOrigin[1]);//(x',y)
-		glEnd();
-		glBegin(GL_LINE_STRIP);
-		glVertex2f(quad.quadOrigin[0], quad.quadOrigin[1]);//(x,y)
-		glVertex2f(quad.quadOrigin[0], mousePos[1]);//(x,y')
-		glEnd();
-		glBegin(GL_LINE_STRIP);
-		glVertex2f(mousePos[0], quad.quadOrigin[1]);//(x',y)
-		glVertex2f(mousePos[0], mousePos[1]);//(x',y')
-		glEnd();
-		glBegin(GL_LINE_STRIP);
-		glVertex2f(quad.quadOrigin[0], mousePos[1]);//(x,y')
-		glVertex2f(mousePos[0], mousePos[1]);//(x',y')
-		glEnd();
-	}
-
-	for (Quad& quad : quadList)
-	{
-		CreateQuad(quad);
-	}
-
-	if (line.linePoints.size() >= 1)
-	{
-		CreateLine(line);	
-	}
-
 	for (Point& point : points)
 	{
 		CreatePoint(point);
 	}
+}
 
+void drawTriangleOutLine()
+{
 	if (numberOfVertices > 0 && numberOfVertices < 3)
 	{
 		glColor3fv(color);
@@ -204,20 +155,55 @@ void display(void)
 		for (int i = 0; i < numberOfVertices; i++)
 		{
 			glVertex2fv(triangle.vertexArray + i * 2);
-			
+
 		}
 		glVertex2fv(mousePos);
 		glEnd();
 	}
+}
 
-	if (triangleList.size() >= 1)
+void drawAllTriangles()
+{
+	for (Triangle& triangle : triangleList)
 	{
-		for (Triangle& triangle : triangleList)
-		{
-			CreateTriangle(triangle);
-		}
+		CreateTriangle(triangle);
 	}
+}
 
+void drawQuadOutline()
+{
+	if (numberOfQuadInputs == 1)
+	{
+		glColor3fv(color);
+		glBegin(GL_LINE_STRIP);
+		glVertex2f(quad.quadOrigin[0], quad.quadOrigin[1]);//(x,y)
+		glVertex2f(mousePos[0], quad.quadOrigin[1]);//(x',y)
+		glEnd();
+		glBegin(GL_LINE_STRIP);
+		glVertex2f(quad.quadOrigin[0], quad.quadOrigin[1]);//(x,y)
+		glVertex2f(quad.quadOrigin[0], mousePos[1]);//(x,y')
+		glEnd();
+		glBegin(GL_LINE_STRIP);
+		glVertex2f(mousePos[0], quad.quadOrigin[1]);//(x',y)
+		glVertex2f(mousePos[0], mousePos[1]);//(x',y')
+		glEnd();
+		glBegin(GL_LINE_STRIP);
+		glVertex2f(quad.quadOrigin[0], mousePos[1]);//(x,y')
+		glVertex2f(mousePos[0], mousePos[1]);//(x',y')
+		glEnd();
+	}
+}
+
+void drawAllQuads()
+{
+	for (Quad& quad : quadList)
+	{
+		CreateQuad(quad);
+	}
+}
+
+void drawPolygon()
+{
 	if (polygon.polygonVertices.size() < 2)
 	{
 		glBegin(GL_LINE_STRIP);
@@ -229,7 +215,7 @@ void display(void)
 		{
 			glVertex2fv(mousePos);
 		}
-		
+
 		glEnd();
 	}
 	else if (polygon.polygonVertices.size() >= 2)
@@ -246,6 +232,30 @@ void display(void)
 		}
 		glEnd();
 	}
+}
+
+void display(void)
+{
+	glClearColor(1.0, 1.0, 1.0, 0.0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glColor3fv(color);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	glLineWidth(lineWidth);
+
+	drawAllPoints();
+
+	CreateLine(line);
+
+	drawTriangleOutLine();
+	drawAllTriangles();
+
+	drawQuadOutline();
+	drawAllQuads();
+	
+	drawPolygon();
 
 	drawCursor();
 
