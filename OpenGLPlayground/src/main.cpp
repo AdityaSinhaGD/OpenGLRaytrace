@@ -16,6 +16,8 @@ float color[3];
 float lineWidth = 1.0f;
 float mousePos[2];
 
+bool drawInProgress = false;
+
 enum struct selection { none, point, line, triangle, quadrilateral, polygon}; 
 selection select = selection::none;
 
@@ -108,6 +110,16 @@ void CreateQuad(Quad quad)
 	glVertex2f(quad.quadEnd[0], quad.quadEnd[1]);
 	glVertex2f(quad.quadOrigin[0], quad.quadEnd[1]);
 	glEnd();
+}
+
+void resetQuadInProgress()
+{
+	numberOfQuadInputs = 0;
+}
+
+void resetTriangleInProgress()
+{
+	numberOfVertices = 0;
 }
 
 void init(void)
@@ -249,10 +261,16 @@ void display(void)
 
 	CreateLine(line);
 
-	drawTriangleOutLine();
+	if (select == selection::triangle)
+	{
+		drawTriangleOutLine();
+	}
 	drawAllTriangles();
 
-	drawQuadOutline();
+	if (select == selection::quadrilateral)
+	{
+		drawQuadOutline();
+	}
 	drawAllQuads();
 	
 	drawPolygon();
@@ -400,10 +418,12 @@ void menu(int value)
 
 	case 3:
 		select = selection::triangle;
+		resetQuadInProgress();
 		break;
 
 	case 4:
 		select = selection::quadrilateral;
+		resetTriangleInProgress();
 		break;
 
 	case 5:
