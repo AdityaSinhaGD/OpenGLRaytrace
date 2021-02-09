@@ -16,8 +16,6 @@ float color[3];
 float lineWidth = 1.0f;
 float mousePos[2];
 
-bool drawInProgress = false;
-
 enum struct selection { none, point, line, triangle, quadrilateral, polygon}; 
 selection select = selection::none;
 
