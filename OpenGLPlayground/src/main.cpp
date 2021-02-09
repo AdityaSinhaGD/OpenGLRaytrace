@@ -63,6 +63,7 @@ public:
 	std::vector<Point> polygonVertices;
 };
 Poly polygon;
+std::vector<Poly> polygonList;
 
 void CreatePoint(Point point)
 {
@@ -92,7 +93,7 @@ void CreateTriangle(Triangle triangle)
 {
 	glColor3f(triangle.color[0], triangle.color[1], triangle.color[2]);
 	glBegin(GL_TRIANGLES);
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < 3; i++)
 	{
 		glVertex2fv(triangle.vertexArray + i * 2);
 	}
@@ -212,7 +213,7 @@ void drawAllQuads()
 	}
 }
 
-void drawPolygon()
+void drawPolygon(Poly polygon)
 {
 	if (polygon.polygonVertices.size() < 2)
 	{
@@ -244,6 +245,29 @@ void drawPolygon()
 	}
 }
 
+void drawPoly(Poly polygon)
+{
+	glColor3fv(color);
+	glBegin(GL_POLYGON);
+	for (Point& point : polygon.polygonVertices)
+	{
+		glVertex2f(point.xCoord, point.yCoord);
+	}
+	/*if (select == selection::polygon)
+	{
+		glVertex2fv(mousePos);
+	}*/
+	glEnd();
+}
+
+void drawAllPolygons()
+{
+	for (Poly& polygon : polygonList)
+	{
+		drawPoly(polygon);
+	}
+}
+
 void display(void)
 {
 	glClearColor(1.0, 1.0, 1.0, 0.0);
@@ -271,7 +295,8 @@ void display(void)
 	}
 	drawAllQuads();
 	
-	drawPolygon();
+	drawPolygon(polygon);
+	drawAllPolygons();
 
 	drawCursor();
 
@@ -385,8 +410,16 @@ void motion(int x, int y)
 
 void keyboard(unsigned char key, int x, int y)
 {
+
 	switch (key)
 	{
+	case 'f':
+		cout << key;
+		polygonList.push_back(polygon);
+		polygon.polygonVertices.clear();
+		glutPostRedisplay();
+		break;
+
 	case 27:
 		exit(0);
 		break;
