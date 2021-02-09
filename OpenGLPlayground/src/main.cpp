@@ -19,23 +19,24 @@ float mousePos[2];
 enum struct selection { none, point, line, triangle, quadrilateral, polygon}; 
 selection select = selection::none;
 
-struct Vector2
+struct Point
 {
 	float xCoord;
 	float yCoord;
-	Vector2(float xCoord, float yCoord)
+	float color[3];
+	/*Point(float xCoord, float yCoord)
 	{
 		this->xCoord = xCoord;
 		this->yCoord = yCoord;
-	}
+	}*/
 };
-
-std::vector<Vector2> points;
+Point point;
+std::vector<Point> points;
 
 class Line
 {
 public:
-	std::vector<Vector2> linePoints;
+	std::vector<Point> linePoints;
 };
 Line line;
 //std::vector<Line> lineList;
@@ -59,7 +60,7 @@ int numberOfQuadInputs = 0;
 class Poly
 {
 public:
-	std::vector<Vector2> polygonVertices;
+	std::vector<Point> polygonVertices;
 };
 
 Poly polygon;
@@ -75,8 +76,9 @@ Triangle triangle;
 int numberOfVertices;
 std::vector<Triangle> triangleList;
 
-void CreatePoint(Vector2 point)
+void CreatePoint(Point point)
 {
+	glColor3f(point.color[0], point.color[1], point.color[2]);
 	glPointSize(10.0f);
 	glBegin(GL_POINTS);
 	glVertex2f(point.xCoord, point.yCoord);
@@ -85,8 +87,9 @@ void CreatePoint(Vector2 point)
 
 void CreateLine(Line line)
 {
+	
 	glBegin(GL_LINE_STRIP);
-	for (Vector2& linePoints : line.linePoints)
+	for (Point& linePoints : line.linePoints)
 	{
 		glVertex2f(linePoints.xCoord, linePoints.yCoord);
 	}
@@ -152,6 +155,8 @@ void display(void)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
+	glLineWidth(lineWidth);
+
 	if (numberOfQuadInputs == 1)
 	{
 		glBegin(GL_LINE_STRIP);
@@ -182,13 +187,14 @@ void display(void)
 		CreateLine(line);	
 	}
 
-	for (Vector2& point : points)
+	for (Point& point : points)
 	{
 		CreatePoint(point);
 	}
 
 	if (numberOfVertices > 0 && numberOfVertices < 3)
 	{
+		glColor3fv(color);
 		glBegin(GL_LINE_STRIP);
 		glVertex2fv(triangle.vertexArray);
 		glVertex2fv(mousePos);
@@ -215,7 +221,7 @@ void display(void)
 	if (polygon.polygonVertices.size() < 2)
 	{
 		glBegin(GL_LINE_STRIP);
-		for (Vector2& point : polygon.polygonVertices)
+		for (Point& point : polygon.polygonVertices)
 		{
 			glVertex2f(point.xCoord, point.yCoord);
 		}
@@ -228,8 +234,9 @@ void display(void)
 	}
 	else if (polygon.polygonVertices.size() >= 2)
 	{
+		glColor3fv(color);
 		glBegin(GL_POLYGON);
-		for (Vector2& point : polygon.polygonVertices)
+		for (Point& point : polygon.polygonVertices)
 		{
 			glVertex2f(point.xCoord, point.yCoord);
 		}
@@ -291,7 +298,10 @@ void mouse(int button, int state, int x, int y)
 		}
 		else if (select == selection::line)
 		{
-			line.linePoints.push_back(Vector2(mousePos[0], mousePos[1]));
+			point.xCoord = mousePos[0];
+			point.yCoord = mousePos[1];
+			line.linePoints.push_back(point);
+			//line.linePoints.push_back(Point(mousePos[0], mousePos[1]));
 		}
 		else if (select == selection::triangle)
 		{
@@ -314,11 +324,20 @@ void mouse(int button, int state, int x, int y)
 		}
 		else if (select == selection::polygon)
 		{
-			polygon.polygonVertices.push_back(Vector2(mousePos[0], mousePos[1]));
+			point.xCoord = mousePos[0];
+			point.yCoord = mousePos[1];
+			polygon.polygonVertices.push_back(point);
+			//polygon.polygonVertices.push_back(Point(mousePos[0], mousePos[1]));
 		}
 		else if (select == selection::point)
 		{
-			points.push_back(Vector2(mousePos[0], mousePos[1]));
+			point.xCoord = mousePos[0];
+			point.yCoord = mousePos[1];
+			point.color[0] = color[0];
+			point.color[1] = color[1];
+			point.color[2] = color[2];
+			points.push_back(point);
+			//points.push_back(Point(mousePos[0], mousePos[1]));
 		}
 
 		glutPostRedisplay();
@@ -399,6 +418,21 @@ void menu(int value)
 		color[0] = 0.0f;
 		color[1] = 0.0f;
 		color[2] = 1.0f;
+		glutPostRedisplay();
+		break;
+
+	case 9:
+		lineWidth = 1.0f;
+		glutPostRedisplay();
+		break;
+
+	case 10:
+		lineWidth = 5.0f;
+		glutPostRedisplay();
+		break;
+
+	case 11:
+		lineWidth = 10.0f;
 		glutPostRedisplay();
 		break;
 
