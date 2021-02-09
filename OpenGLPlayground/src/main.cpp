@@ -213,7 +213,7 @@ void drawAllQuads()
 	}
 }
 
-void drawPolygon(Poly polygon)
+void drawCurrentPolygon(Poly polygon)
 {
 	if (polygon.polygonVertices.size() < 2)
 	{
@@ -245,7 +245,7 @@ void drawPolygon(Poly polygon)
 	}
 }
 
-void drawPoly(Poly polygon)
+void drawPolygon(Poly polygon)
 {
 	glColor3fv(color);
 	glBegin(GL_POLYGON);
@@ -264,7 +264,7 @@ void drawAllPolygons()
 {
 	for (Poly& polygon : polygonList)
 	{
-		drawPoly(polygon);
+		drawPolygon(polygon);
 	}
 }
 
@@ -295,7 +295,7 @@ void display(void)
 	}
 	drawAllQuads();
 	
-	drawPolygon(polygon);
+	drawCurrentPolygon(polygon);
 	drawAllPolygons();
 
 	drawCursor();
