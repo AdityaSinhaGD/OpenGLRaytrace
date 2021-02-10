@@ -72,7 +72,7 @@ public:
 Poly polygon;
 std::vector<Poly> polygonList;
 
-void CreatePoint(Point point)
+void drawPoint(Point point)
 {
 	glColor3f(point.color[0], point.color[1], point.color[2]);
 	glPointSize(point.size);
@@ -189,7 +189,7 @@ void drawAllPoints()
 {
 	for (Point& point : points)
 	{
-		CreatePoint(point);
+		drawPoint(point);
 	}
 }
 
