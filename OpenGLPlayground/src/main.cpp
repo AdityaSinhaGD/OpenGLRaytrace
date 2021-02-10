@@ -84,6 +84,7 @@ void CreatePoint(Point point)
 void drawCurrentLine(Line line)
 {
 	glLineWidth(lineWidth);
+	glColor3fv(color);
 	glBegin(GL_LINE_STRIP);
 	for (Point& linePoints : line.linePoints)
 	{
