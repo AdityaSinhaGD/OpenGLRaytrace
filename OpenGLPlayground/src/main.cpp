@@ -16,6 +16,8 @@ float color[3];
 float lineWidth = 1.0f;
 float mousePos[2];
 
+float pointSize;
+
 enum struct selection { none, point, line, triangle, quadrilateral, polygon}; 
 selection select = selection::none;
 
@@ -24,6 +26,7 @@ struct Point
 	float xCoord;
 	float yCoord;
 	float color[3];
+	float size;
 };
 Point point;
 std::vector<Point> points;
@@ -31,9 +34,12 @@ std::vector<Point> points;
 class Line
 {
 public:
+	float color[3];
+	float width;
 	std::vector<Point> linePoints;
 };
 Line line;
+std::vector<Line> lineList;
 
 class Triangle
 {
@@ -60,6 +66,7 @@ int numberOfQuadInputs = 0;
 class Poly
 {
 public:
+	float color[3];
 	std::vector<Point> polygonVertices;
 };
 Poly polygon;
@@ -68,15 +75,15 @@ std::vector<Poly> polygonList;
 void CreatePoint(Point point)
 {
 	glColor3f(point.color[0], point.color[1], point.color[2]);
-	glPointSize(10.0f);
+	glPointSize(point.size);
 	glBegin(GL_POINTS);
 	glVertex2f(point.xCoord, point.yCoord);
 	glEnd();
 }
 
-void CreateLine(Line line)
+void drawCurrentLine(Line line)
 {
-	
+	glLineWidth(lineWidth);
 	glBegin(GL_LINE_STRIP);
 	for (Point& linePoints : line.linePoints)
 	{
@@ -89,7 +96,20 @@ void CreateLine(Line line)
 	glEnd();
 }
 
-void CreateTriangle(Triangle triangle)
+void drawLine(Line line)
+{
+	glLineWidth(line.width);
+	glBegin(GL_LINE_STRIP);
+	glColor3fv(line.color);
+	
+	for (Point& linePoints : line.linePoints)
+	{
+		glVertex2f(linePoints.xCoord, linePoints.yCoord);
+	}
+	glEnd();
+}
+
+void drawTriangle(Triangle triangle)
 {
 	glColor3f(triangle.color[0], triangle.color[1], triangle.color[2]);
 	glBegin(GL_TRIANGLES);
@@ -100,7 +120,7 @@ void CreateTriangle(Triangle triangle)
 	glEnd();
 }
 
-void CreateQuad(Quad quad)
+void drawQuad(Quad quad)
 {
 	glColor3f(quad.color[0], quad.color[1], quad.color[2]);
 	glBegin(GL_QUADS);
@@ -119,6 +139,26 @@ void resetQuadInProgress()
 void resetTriangleInProgress()
 {
 	numberOfVertices = 0;
+}
+
+void finishDrawingCurrentPolygon()
+{
+	polygon.color[0] = color[0];
+	polygon.color[1] = color[1];
+	polygon.color[2] = color[2];
+	polygonList.push_back(polygon);
+	polygon.polygonVertices.clear();
+}
+
+void finishDrawingCurrentLine()
+{
+
+	line.color[0] = color[0];
+	line.color[1] = color[1];
+	line.color[2] = color[2];
+	line.width = lineWidth;
+	lineList.push_back(line);
+	line.linePoints.clear();
 }
 
 void init(void)
@@ -152,6 +192,14 @@ void drawAllPoints()
 	}
 }
 
+void drawAllLines()
+{
+	for (Line& line : lineList)
+	{
+		drawLine(line);
+	}
+}
+
 void drawTriangleOutLine()
 {
 	if (numberOfVertices > 0 && numberOfVertices < 3)
@@ -177,7 +225,7 @@ void drawAllTriangles()
 {
 	for (Triangle& triangle : triangleList)
 	{
-		CreateTriangle(triangle);
+		drawTriangle(triangle);
 	}
 }
 
@@ -209,12 +257,13 @@ void drawAllQuads()
 {
 	for (Quad& quad : quadList)
 	{
-		CreateQuad(quad);
+		drawQuad(quad);
 	}
 }
 
 void drawCurrentPolygon(Poly polygon)
 {
+	glColor3fv(color);
 	if (polygon.polygonVertices.size() < 2)
 	{
 		glBegin(GL_LINE_STRIP);
@@ -226,7 +275,6 @@ void drawCurrentPolygon(Poly polygon)
 		{
 			glVertex2fv(mousePos);
 		}
-
 		glEnd();
 	}
 	else if (polygon.polygonVertices.size() >= 2)
@@ -247,16 +295,12 @@ void drawCurrentPolygon(Poly polygon)
 
 void drawPolygon(Poly polygon)
 {
-	glColor3fv(color);
+	glColor3fv(polygon.color);
 	glBegin(GL_POLYGON);
 	for (Point& point : polygon.polygonVertices)
 	{
 		glVertex2f(point.xCoord, point.yCoord);
 	}
-	/*if (select == selection::polygon)
-	{
-		glVertex2fv(mousePos);
-	}*/
 	glEnd();
 }
 
@@ -277,11 +321,12 @@ void display(void)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	glLineWidth(lineWidth);
-
 	drawAllPoints();
 
-	CreateLine(line);
+	drawCurrentLine(line);
+	drawAllLines();
+
+	glLineWidth(1.0f);
 
 	if (select == selection::triangle)
 	{
@@ -352,7 +397,7 @@ void mouse(int button, int state, int x, int y)
 			point.xCoord = mousePos[0];
 			point.yCoord = mousePos[1];
 			line.linePoints.push_back(point);
-			//line.linePoints.push_back(Point(mousePos[0], mousePos[1]));
+			
 		}
 		else if (select == selection::triangle)
 		{
@@ -378,7 +423,7 @@ void mouse(int button, int state, int x, int y)
 			point.xCoord = mousePos[0];
 			point.yCoord = mousePos[1];
 			polygon.polygonVertices.push_back(point);
-			//polygon.polygonVertices.push_back(Point(mousePos[0], mousePos[1]));
+		
 		}
 		else if (select == selection::point)
 		{
@@ -387,8 +432,9 @@ void mouse(int button, int state, int x, int y)
 			point.color[0] = color[0];
 			point.color[1] = color[1];
 			point.color[2] = color[2];
+			point.size = pointSize;
 			points.push_back(point);
-			//points.push_back(Point(mousePos[0], mousePos[1]));
+			
 		}
 
 		glutPostRedisplay();
@@ -414,16 +460,20 @@ void keyboard(unsigned char key, int x, int y)
 	switch (key)
 	{
 	case 'f':
-		cout << key;
-		polygonList.push_back(polygon);
-		polygon.polygonVertices.clear();
+
+		finishDrawingCurrentPolygon();
+		finishDrawingCurrentLine();
 		glutPostRedisplay();
 		break;
 
 	case 27:
 		exit(0);
 		break;
+
+	default:
+		break;
 	}
+
 }
 
 void menu(int value)
@@ -433,9 +483,11 @@ void menu(int value)
 	case 0:
 		quadList.clear();
 		line.linePoints.clear();
+		lineList.clear();
 		points.clear();
 		triangleList.clear();
 		polygon.polygonVertices.clear();
+		polygonList.clear();
 		glutPostRedisplay();
 		break;
 
@@ -445,20 +497,30 @@ void menu(int value)
 
 	case 2:
 		select = selection::line;
+		resetTriangleInProgress();
+		resetQuadInProgress();
+		finishDrawingCurrentPolygon();
 		break;
 
 	case 3:
 		select = selection::triangle;
 		resetQuadInProgress();
+		finishDrawingCurrentLine();
+		finishDrawingCurrentPolygon();
 		break;
 
 	case 4:
 		select = selection::quadrilateral;
+		finishDrawingCurrentPolygon();
 		resetTriangleInProgress();
+		finishDrawingCurrentLine();
 		break;
 
 	case 5:
 		select = selection::polygon;
+		resetTriangleInProgress();
+		resetQuadInProgress();
+		finishDrawingCurrentLine();
 		break;
 
 	case 6:
@@ -497,6 +559,21 @@ void menu(int value)
 		glutPostRedisplay();
 		break;
 
+	case 12:
+		pointSize = 5.0f;
+		glutPostRedisplay();
+		break;
+
+	case 13:
+		pointSize = 10.0f;
+		glutPostRedisplay();
+		break;
+
+	case 14:
+		pointSize = 15.0f;
+		glutPostRedisplay();
+		break;
+
 	default:
 		break;
 	}
@@ -521,11 +598,17 @@ void createMenu()
 	glutAddMenuEntry("Medium", 10);
 	glutAddMenuEntry("Thick", 11);
 
+	int pointSizeMenu = glutCreateMenu(menu);
+	glutAddMenuEntry("Small", 12);
+	glutAddMenuEntry("Medium", 13);
+	glutAddMenuEntry("Large", 14);
+
 	glutCreateMenu(menu);
 	glutAddMenuEntry("Clear", 0);
 	glutAddSubMenu("Objects", objectMenu);
 	glutAddSubMenu("Color", colorMenu);
 	glutAddSubMenu("LineWidth", lineWidthMenu);
+	glutAddSubMenu("PointSize", pointSizeMenu);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
@@ -536,7 +619,7 @@ int main(int argc, char* argv[])
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowSize(rasterSize[0], rasterSize[1]);
-	glutCreateWindow("Mouse Event - draw a quad");
+	glutCreateWindow("OpenGL Assignment 1");
 
 	glutReshapeFunc(reshape);
 	glutDisplayFunc(display);
