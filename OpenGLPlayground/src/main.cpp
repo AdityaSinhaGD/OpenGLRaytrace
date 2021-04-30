@@ -325,6 +325,7 @@ void beginRayTrace()
 	const auto image_width = g_winWidth;
 	const auto aspect_ratio = 4.0 / 3.0;
 	const auto image_height = static_cast<int>(image_width / aspect_ratio);
+	std::cout << "image height:" << image_height << "\n";
 
 	//Camera Related
 	auto origin = glm::vec3(g_cam.eye.x, g_cam.eye.y, g_cam.eye.z);
