@@ -328,6 +328,7 @@ void beginRayTrace()
 
 	//Camera Related
 	auto origin = glm::vec3(g_cam.eye.x, g_cam.eye.y, g_cam.eye.z);
+	fovY = g_cam.fovy;
 	auto viewport_height = 2 * tan(deg2rad(fovY * 0.5));
 	auto viewport_width = aspect_ratio * viewport_height;
 	auto focal_length = g_cam.near_plane;
@@ -336,7 +337,7 @@ void beginRayTrace()
 	auto vertical = glm::vec3(0, viewport_height, 0);
 	auto lower_left_corner = origin - horizontal * 0.5f - vertical * 0.5f - glm::vec3(0, 0, focal_length);
 
-	std::cout << focal_length << " " << origin.z << " " << viewport_height;
+	std::cout << focal_length << " " << origin.z << " " << viewport_height << " " << fovY << std::endl;
 
 	// Render
 
