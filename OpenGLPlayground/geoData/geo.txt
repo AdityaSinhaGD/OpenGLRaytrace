@@ -1,0 +1,44 @@
+Camera:
+	eye: 0 0 8
+	lookat: 0 0 0
+	near_plane: 1.2071
+
+Light:	
+	position: -10 3 20
+	color: 1 1 1
+	intensity: 1
+	
+Sphere:
+	num: 2
+	
+	position: 1.5 0.5 0
+	radius: 1
+	color: 1 0 0
+	ambient: 0.2
+	diffuse: 0.8
+	phong: 1.0
+	
+	position: -1.2 0.5 3.5
+	radius: 0.5
+	color: 0 0 1 
+	ambient: 0.2
+	diffuse: 0.8
+	phong: 1.0
+	
+Box:
+	num: 2
+	
+	conner_position: -3.0 -1.2 -4.0 3.0 -1.0 2.0
+	color: 1 0 1
+	rotate: 30 -30 0
+	ambient: 0.2
+	diffuse: 0.8
+	phong: 1.0
+
+	conner_position: 0.5 -1.0 1.0 1.5 0.0 2.0
+	color: 0 1 0 
+	rotate: 0 -30 0
+	ambient: 0.2
+	diffuse: 0.8
+	phong: 1.0
+	
