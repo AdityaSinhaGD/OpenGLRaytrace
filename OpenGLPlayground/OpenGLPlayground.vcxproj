@@ -149,6 +149,7 @@
     <ClInclude Include="src\Box.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Light.h" />
+    <ClInclude Include="src\Ray.h" />
     <ClInclude Include="src\Sphere.h" />
     <ClInclude Include="src\Text.h" />
   </ItemGroup>

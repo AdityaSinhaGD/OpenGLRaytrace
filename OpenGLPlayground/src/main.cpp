@@ -19,13 +19,24 @@
 
 #include <fstream>
 #include <iostream>
+#include "Ray.h"
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 using namespace std;
 using namespace glm;
+
+inline
+float deg2rad(const float& deg)
+{
+	return deg * M_PI / 180;
+}
 
 int g_winWidth = 640;
 int g_winHeight = 480;
 
 Camera g_cam;
+int fovY = 90;
 
 unsigned char g_keyStates[256];
 
@@ -44,6 +55,29 @@ Sphere* g_spheres;
 
 Light g_light;
 
+bool hit_sphere(const glm::vec3& center, double radius, const ray& r)
+{
+	//std::cout<<r.direction().x<<" "<<r.direction().y<<" "<<r.direction().z<<std::endl;
+	glm::vec3 oc = r.origin() - center;
+	auto a = dot(r.direction(), r.direction());
+	auto b = 2.0 * glm::dot(oc, r.direction());
+	auto c = dot(oc, oc) - radius * radius;
+	auto discriminant = b * b - 4 * a * c;
+	return (discriminant > 0);
+}
+
+glm::vec3 rayColor(const ray& r)
+{
+	if (hit_sphere(glm::vec3(g_spheres[0].pos.x,g_spheres[0].pos.y, g_spheres[0].pos.z), g_spheres[0].radius, r))
+	{
+		return glm::vec3(1, 0, 0);
+	}
+	else
+	{
+		return glm::vec3(0, 0, 0);
+	}
+}
+
 float vertices[4 * 2] = { 0,   0,
 						  640, 0,
 						  640, 480,
@@ -57,16 +91,16 @@ GLuint glTexID = -1;
 
 unsigned char* imagedata;
 
-void createTexture()
+void createTexture(glm::vec3* frameBuffer)
 {
 	imagedata = new unsigned char[g_winWidth * g_winHeight * 3];
 
 	// assign red color (255, 0 , 0) to each pixel
 	for (int i = 0; i < g_winWidth * g_winHeight; i++)
 	{
-		imagedata[i * 3 + 0] = 255; // R
-		imagedata[i * 3 + 1] = 0;   // G
-		imagedata[i * 3 + 2] = 0;   // B
+		imagedata[i * 3 + 0] = 255*frameBuffer[i].x; // R
+		imagedata[i * 3 + 1] = 255*frameBuffer[i].y;   // G
+		imagedata[i * 3 + 2] = 255*frameBuffer[i].z;   // B
 	}
 
 	glGenTextures(1, &glTexID);
@@ -81,10 +115,6 @@ void createTexture()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, g_winWidth, g_winHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, imagedata);
 }
 
-void initGLStuff(void)
-{
-	createTexture();
-}
 
 void drawPlane()
 {
@@ -291,12 +321,59 @@ void beginRayTrace()
 
 	LoadConfigFile(dataFile);
 
-	glm::vec3 origin = glm::vec3(g_cam.eye.x, g_cam.eye.y, g_cam.eye.z);
-	std::cout << origin.z;
+	//Image Related
+	const auto image_width = g_winWidth;
+	const auto aspect_ratio = 4.0 / 3.0;
+	const auto image_height = static_cast<int>(image_width / aspect_ratio);
+
+	//Camera Related
+	auto origin = glm::vec3(g_cam.eye.x, g_cam.eye.y, g_cam.eye.z);
+	auto viewport_height = 2 * tan(deg2rad(fovY * 0.5));
+	auto viewport_width = aspect_ratio * viewport_height;
+	auto focal_length = g_cam.near_plane;
+
+	auto horizontal = glm::vec3(viewport_width, 0, 0);
+	auto vertical = glm::vec3(0, viewport_height, 0);
+	auto lower_left_corner = origin - horizontal * 0.5f - vertical * 0.5f - glm::vec3(0, 0, focal_length);
+
+	std::cout << focal_length << " " << origin.z << " " << viewport_height;
+
+	// Render
+
+	glm::vec3* frameBuffer = new glm::vec3[image_width * image_height];
+	glm::vec3* pix = frameBuffer;
+	std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+
+	for (int j = image_height - 1; j >= 0; --j)
+	{
+		for (int i = 0; i < image_width; ++i)
+		{
+
+			auto u = float(i) / (image_width - 1);
+			auto v = float(j) / (image_height - 1);
+			ray r(origin, lower_left_corner + u * horizontal + v * vertical - origin);
 
 
+			*(pix++) = rayColor(r);
 
-	createTexture();
+			//std::cout << ir << ' ' << ig << ' ' << ib << '\n';
+		}
+	}
+	// Save result to a PPM image (keep these flags if you compile under Windows)
+	std::ofstream ofs("C:/Users/Aditya Sinha/Desktop/out2.ppm", std::ios::out | std::ios::binary);
+	ofs << "P6\n" << image_width << " " << image_height << "\n255\n";
+	for (uint32_t i = 0; i < image_width * image_height; ++i)
+	{
+		
+		char r = 255 * frameBuffer[i].x;
+		char g = 255 * frameBuffer[i].y;
+		char b = 255 * frameBuffer[i].z;
+		ofs << r << g << b;
+	}
+
+	ofs.close();
+
+	createTexture(frameBuffer);
 }
 
 

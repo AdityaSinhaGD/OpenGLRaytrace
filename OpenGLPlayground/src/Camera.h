@@ -15,11 +15,13 @@ public:
 
 	mat4			mvMat;
     mat4			projMat;
+	float           near_plane;
+	float           fovy;
 
 private:
-    float           fovy;              // view angle 
+                 // view angle 
     float           aspect;            // the window ration equal to w/h
-    float           near_plane;
+    
     float           far_plane;
 
     vec4			axis_n;            //eye-lookat
