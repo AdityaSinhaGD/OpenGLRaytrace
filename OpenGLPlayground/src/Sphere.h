@@ -30,8 +30,8 @@ public:
     bool hit(const ray& r, float t_min, float t_max, hit_record& record) const override
     {
         vec3 oc = r.origin() - pos;
-        auto a = glm::dot(r.dir, r.dir);
-        auto half_b = dot(oc, r.dir);
+        auto a = glm::dot(r.direction(), r.direction());
+        auto half_b = dot(oc, r.direction());
         auto c = dot(oc,oc) - radius * radius;
 
         auto discriminant = half_b * half_b - a * c;
