@@ -87,18 +87,22 @@ glm::vec3 rayColor(const ray& r, std::vector<std::shared_ptr<hittable>> hittable
 	if (hit)
 	{
 		//todo Calculate Phong
-		vec3 normal = closestHit.normal;
-		vec3 lightDir = normalize(g_light.pos - closestHit.hitPoint);
-		float diff = std::max(dot(normal, lightDir), 0.0f);
-		vec3 reflectDir = glm::reflect(-lightDir, normal);
-		vec3 viewDir = normalize(glm::vec3(g_cam.eye.x,g_cam.eye.y,g_cam.eye.z) - normal);
-		float spec = pow(std::max(dot(viewDir, reflectDir), 0.0f), closestHit.phong);
+		vec3 normal = closestHit.normal;//n
+		vec3 lightDir = normalize(g_light.pos - closestHit.hitPoint);//s
+		float diff = std::max(dot(normal, lightDir),0.0f);//s.n
+		vec3 reflectDir = glm::normalize(glm::reflect(-lightDir, normal));//r
+		vec3 viewDir = glm::normalize(glm::vec3(g_cam.eye.x,g_cam.eye.y,g_cam.eye.z) - closestHit.hitPoint);//v
+		float rdv = pow(dot(viewDir, reflectDir), 50);
+		float spec = std::max(rdv,0.0f);
 
-		vec3 ambient = closestHit.color * closestHit.ambient;
-		vec3 specular = closestHit.color * spec;
-		vec3 diffuse = closestHit.color * diff;
+		float ia = closestHit.ambient;
+		float id = g_light.intensity * closestHit.diffuse * diff;
+		float is = g_light.intensity * closestHit.phong * spec;
 
-		return ambient+specular+diffuse;
+		glm::vec3 color = (ia + id) * g_light.color * closestHit.color + is * g_light.color;
+
+		return color;
+
 	}
 	return glm::vec3(0, 0, 0);
 }

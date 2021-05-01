@@ -49,7 +49,8 @@ public:
 
         record.t = root;
         record.hitPoint = r.at(record.t);
-        record.normal = (record.hitPoint - pos) / radius;
+        record.normal = (record.hitPoint - pos);
+        record.normal = glm::normalize(record.normal);
         record.ambient = ambient;
         record.diffuse = diffuse;
         record.phong = phong;
