@@ -403,7 +403,7 @@ void beginRayTrace()
 	glm::vec3* pix = frameBuffer;
 	std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
-	for (int j = image_height - 1; j >= 0; --j)
+	for (int j = 0; j < image_height; ++j)
 	{
 		for (int i = 0; i < image_width; ++i)
 		{
@@ -418,21 +418,8 @@ void beginRayTrace()
 			//std::cout << ir << ' ' << ig << ' ' << ib << '\n';
 		}
 	}
-	// Save result to a PPM image (keep these flags if you compile under Windows)
-	std::ofstream ofs("C:/Users/Aditya Sinha/Desktop/out2.ppm", std::ios::out | std::ios::binary);
-	ofs << "P6\n" << image_width << " " << image_height << "\n255\n";
-	for (uint32_t i = 0; i < image_width * image_height; ++i)
-	{
-		
-		char r = 255 * frameBuffer[i].x;
-		char g = 255 * frameBuffer[i].y;
-		char b = 255 * frameBuffer[i].z;
-		ofs << r << g << b;
-	}
-
-	ofs.close();
-
 	createTexture(frameBuffer);
+	delete[] frameBuffer;
 }
 
 
@@ -450,6 +437,15 @@ void display()
 
 	// if need to update imagedata, do it here, before displaying it as a texture on the quad 
 	drawPlane();
+	//for (int i = 0; i < g_sphere_num; i++)
+	//	g_spheres[i].Draw();
+	//for (int i = 0; i < g_box_num; i++)
+	//	g_boxes[i].Draw();
+
+	// displaying the camera
+	//g_cam.drawGrid();
+	//g_cam.drawCoordinateOnScreen(g_winWidth, g_winHeight);
+	//g_cam.drawCoordinate();
 	glutSwapBuffers();
 }
 
