@@ -418,7 +418,7 @@ void beginRayTrace()
 
 	ofs.close();
 
-	//createTexture(frameBuffer);
+	createTexture(frameBuffer);
 }
 
 
