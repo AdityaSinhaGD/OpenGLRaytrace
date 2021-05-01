@@ -362,6 +362,20 @@ void beginRayTrace()
 
 		hittables.emplace_back(sphere);
 	}
+	for (int i = 0; i < g_box_num; i++)
+	{
+		auto box = std::make_shared<Box>();
+		box->minPos = g_boxes[i].minPos;
+		box->maxPos = g_boxes[i].maxPos;
+		box->color = g_boxes[i].color;
+		box->ambient = g_boxes[i].ambient;
+		box->diffuse = g_boxes[i].diffuse;
+		box->phong = g_boxes[i].phong;
+		box->rotMat = g_boxes[i].rotMat;
+		box->invRotMat = g_boxes[i].invRotMat;
+		
+		hittables.emplace_back(box);
+	}
 	std::cout << hittables.size() << "\n";
 
 	//Image Related

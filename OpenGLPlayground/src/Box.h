@@ -13,12 +13,12 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/constants.hpp>
 #include <glm/gtx/string_cast.hpp>
-
+#include "hittable.h"
 #include <iostream>
 using namespace std;
 using namespace glm;
 
-class Box{
+class Box:public hittable{
     
 public: // it would be better to have some kind of protection on members...
 	unsigned int num;
@@ -95,6 +95,56 @@ public:
  
         glPopMatrix();
     };
+
+
+    bool hit(const ray& r, float t_min, float t_max, hit_record& record) const override
+    {
+        float tmin = (minPos.x - r.orig.x) / r.dir.x;
+        float tmax = (maxPos.x - r.orig.x) / r.dir.x;
+
+        if (tmin > tmax) swap(tmin, tmax);
+
+        float tymin = (minPos.y - r.orig.y) / r.dir.y;
+        float tymax = (maxPos.y - r.orig.y) / r.dir.y;
+
+        if (tymin > tymax) swap(tymin, tymax);
+
+        if ((tmin > tymax) || (tymin > tmax))
+            return false;
+
+        if (tymin > tmin)
+            tmin = tymin;
+
+        if (tymax < tmax)
+            tmax = tymax;
+
+        float tzmin = (minPos.z - r.orig.z) / r.dir.z;
+        float tzmax = (maxPos.z - r.orig.z) / r.dir.z;
+
+        if (tzmin > tzmax) swap(tzmin, tzmax);
+
+        if ((tmin > tzmax) || (tzmin > tmax))
+            return false;
+
+        if (tzmin > tmin)
+            tmin = tzmin;
+
+        if (tzmax < tmax)
+            tmax = tzmax;
+
+        
+        record.t = tmin;
+        record.hitPoint = r.at(record.t);
+        record.normal = (record.hitPoint - (minPos+maxPos)*0.5f);
+        record.normal = glm::normalize(record.normal);
+        record.ambient = ambient;
+        record.diffuse = diffuse;
+        record.phong = phong;
+        record.color = color;
+
+
+        return true;
+    }
     
 };
 
