@@ -29,45 +29,33 @@ public:
 
     bool hit(const ray& r, float t_min, float t_max, hit_record& record) const override
     {
-        glm::vec3 oc = r.origin() - pos;
-        auto a = dot(r.direction(), r.direction());
-        auto b = 2.0 * glm::dot(oc, r.direction());
-        auto c = dot(oc, oc) - radius * radius;
-        auto discriminant = b * b - 4 * a * c;
+        vec3 oc = r.origin() - pos;
+        auto a = glm::dot(r.dir, r.dir);
+        auto half_b = dot(oc, r.dir);
+        auto c = dot(oc,oc) - radius * radius;
 
-        if (discriminant > 0)
+        auto discriminant = half_b * half_b - a * c;
+        if (discriminant < 0) return false;
+        auto sqrtd = std::sqrt(discriminant);
+
+        // Find the nearest root that lies in the acceptable range.
+        auto root = (-half_b - sqrtd) / a;
+        if (root < t_min || t_max < root)
         {
-            float temp = (-b - std::sqrt(discriminant)) / 2;
-            if (temp > t_min && temp < t_max)
-            {
-                record.t = temp;
-                record.hitPoint = r.at(record.t);
-                record.normal = (record.hitPoint - pos);
-                record.normal = glm::normalize(record.normal);
-                record.phong = phong;
-                record.ambient = ambient;
-                record.diffuse = diffuse;
-                record.color = color;
-                return true;
-            }
-
-            temp = (-b + std::sqrt(discriminant)) / 2;
-            if (temp > t_min && temp < t_max)
-            {
-                record.t = temp;
-                record.hitPoint = r.at(record.t);
-                record.normal = (record.hitPoint - pos);
-                record.normal = glm::normalize(record.normal);
-                record.phong = phong;
-                record.ambient = ambient;
-                record.diffuse = diffuse;
-                record.color = color;
-                return true;
-            }
-
+            root = (-half_b + sqrtd) / a;
+            if (root < t_min || t_max < root)
+                return false;
         }
 
-        return false;
+        record.t = root;
+        record.hitPoint = r.at(record.t);
+        record.normal = (record.hitPoint - pos) / radius;
+        record.ambient = ambient;
+        record.diffuse = diffuse;
+        record.phong = phong;
+        record.color = color;
+
+        return true;
     }
     
     void Draw()
