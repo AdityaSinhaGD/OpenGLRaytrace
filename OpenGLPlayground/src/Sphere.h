@@ -5,10 +5,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/constants.hpp>
+#include "hittable.h"
+#include <iostream>
 
 using namespace glm;
 
-class Sphere{
+class Sphere : public hittable{
 
 public: // it would be better to have some kind of protection on members...
 
@@ -24,6 +26,49 @@ public: // it would be better to have some kind of protection on members...
 public:
     Sphere(){};
     ~Sphere(){};
+
+    bool hit(const ray& r, float t_min, float t_max, hit_record& record) const override
+    {
+        glm::vec3 oc = r.origin() - pos;
+        auto a = dot(r.direction(), r.direction());
+        auto b = 2.0 * glm::dot(oc, r.direction());
+        auto c = dot(oc, oc) - radius * radius;
+        auto discriminant = b * b - 4 * a * c;
+
+        if (discriminant > 0)
+        {
+            float temp = (-b - std::sqrt(discriminant)) / 2;
+            if (temp > t_min && temp < t_max)
+            {
+                record.t = temp;
+                record.hitPoint = r.at(record.t);
+                record.normal = (record.hitPoint - pos);
+                record.normal = glm::normalize(record.normal);
+                record.phong = phong;
+                record.ambient = ambient;
+                record.diffuse = diffuse;
+                record.color = color;
+                return true;
+            }
+
+            temp = (-b + std::sqrt(discriminant)) / 2;
+            if (temp > t_min && temp < t_max)
+            {
+                record.t = temp;
+                record.hitPoint = r.at(record.t);
+                record.normal = (record.hitPoint - pos);
+                record.normal = glm::normalize(record.normal);
+                record.phong = phong;
+                record.ambient = ambient;
+                record.diffuse = diffuse;
+                record.color = color;
+                return true;
+            }
+
+        }
+
+        return false;
+    }
     
     void Draw()
     {

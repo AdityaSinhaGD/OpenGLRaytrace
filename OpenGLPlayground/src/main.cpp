@@ -20,6 +20,10 @@
 #include <fstream>
 #include <iostream>
 #include "Ray.h"
+
+#include <vector>
+#include <memory>
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -55,6 +59,8 @@ Sphere* g_spheres;
 
 Light g_light;
 
+std::vector<std::shared_ptr<hittable>> hittables;
+
 bool hit_sphere(const glm::vec3& center, double radius, const ray& r)
 {
 	//std::cout<<r.direction().x<<" "<<r.direction().y<<" "<<r.direction().z<<std::endl;
@@ -66,16 +72,35 @@ bool hit_sphere(const glm::vec3& center, double radius, const ray& r)
 	return (discriminant > 0);
 }
 
-glm::vec3 rayColor(const ray& r)
+glm::vec3 rayColor(const ray& r, std::vector<std::shared_ptr<hittable>> hittables)
 {
-	if (hit_sphere(glm::vec3(g_spheres[0].pos.x,g_spheres[0].pos.y, g_spheres[0].pos.z), g_spheres[0].radius, r))
+	hit_record closestHit;
+	closestHit.t = FLT_MAX;
+	bool hit = false;
+	for (auto& hitabble : hittables)
 	{
-		return glm::vec3(1, 0, 0);
+		if (hitabble->hit(r, 0.001f, closestHit.t, closestHit))
+		{
+			hit = true;
+		}
 	}
-	else
+	if (hit)
 	{
-		return glm::vec3(0, 0, 0);
+		//todo Calculate Phong
+		vec3 normal = closestHit.normal;
+		vec3 lightDir = normalize(g_light.pos - closestHit.hitPoint);
+		float diff = std::max(dot(normal, lightDir), 0.0f);
+		vec3 reflectDir = glm::reflect(-lightDir, normal);
+		vec3 viewDir = normalize(glm::vec3(g_cam.eye.x,g_cam.eye.y,g_cam.eye.z) - normal);
+		float spec = pow(std::max(dot(viewDir, reflectDir), 0.0f), closestHit.phong);
+
+		vec3 ambient = closestHit.color * closestHit.ambient;
+		vec3 specular = closestHit.color * spec;
+		vec3 diffuse = closestHit.color * diff;
+
+		return ambient+specular+diffuse;
 	}
+	return glm::vec3(0, 0, 0);
 }
 
 float vertices[4 * 2] = { 0,   0,
@@ -321,6 +346,20 @@ void beginRayTrace()
 
 	LoadConfigFile(dataFile);
 
+	for (int i = 0; i < g_sphere_num; i++)
+	{
+		auto sphere = std::make_shared<Sphere>();
+		sphere->pos = g_spheres[i].pos;
+		sphere->radius = g_spheres[i].radius;
+		sphere->color = g_spheres[i].color;
+		sphere->ambient = g_spheres[i].ambient;
+		sphere->diffuse = g_spheres[i].diffuse;
+		sphere->phong = g_spheres[i].phong;
+
+		hittables.emplace_back(sphere);
+	}
+	std::cout << hittables.size() << "\n";
+
 	//Image Related
 	const auto image_width = g_winWidth;
 	const auto aspect_ratio = 4.0 / 3.0;
@@ -356,7 +395,7 @@ void beginRayTrace()
 			ray r(origin, lower_left_corner + u * horizontal + v * vertical - origin);
 
 
-			*(pix++) = rayColor(r);
+			*(pix++) = rayColor(r,hittables);
 
 			//std::cout << ir << ' ' << ig << ' ' << ib << '\n';
 		}
@@ -375,7 +414,7 @@ void beginRayTrace()
 
 	ofs.close();
 
-	createTexture(frameBuffer);
+	//createTexture(frameBuffer);
 }
 
 
