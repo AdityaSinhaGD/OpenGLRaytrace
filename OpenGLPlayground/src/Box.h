@@ -148,7 +148,7 @@ public:
 				if (-e + minPos.x > 0.0f || -e + maxPos.x < 0.0f)
 					return false;
 			}
-			record.normal = xaxis;
+			
 		}
 
 
@@ -180,7 +180,8 @@ public:
 				if (-e + minPos.y > 0.0f || -e + maxPos.y < 0.0f)
 					return false;
 			}
-			record.normal = yaxis;
+			auto normal = invRotMat * glm::vec4(yaxis, 1);
+			record.normal = glm::vec3(normal.x, normal.y, normal.z);
 		}
 
 
@@ -212,12 +213,12 @@ public:
 				if (-e + minPos.z > 0.0f || -e + maxPos.z < 0.0f)
 					return false;
 			}
-			record.normal = zaxis;
+			
 		}
 
 		record.t = tMin;
 		record.hitPoint = r.at(record.t);
-		record.normal = glm::normalize(record.normal);
+		record.normal = glm::normalize(record.hitPoint- OBBposition_worldspace);
 		record.ambient = ambient;
 		record.diffuse = diffuse;
 		record.phong = phong;

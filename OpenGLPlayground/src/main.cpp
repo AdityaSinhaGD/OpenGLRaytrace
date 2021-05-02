@@ -137,9 +137,9 @@ void createTexture(glm::vec3* frameBuffer)
 	// assign red color (255, 0 , 0) to each pixel
 	for (int i = 0; i < g_winWidth * g_winHeight; i++)
 	{
-		imagedata[i * 3 + 0] = 255*frameBuffer[i].x; // R
-		imagedata[i * 3 + 1] = 255*frameBuffer[i].y;   // G
-		imagedata[i * 3 + 2] = 255*frameBuffer[i].z;   // B
+		imagedata[i * 3 + 0] = 255 * std::max(0.0f, std::min(frameBuffer[i].x, 1.0f));
+		imagedata[i * 3 + 1] = 255 * std::max(0.0f, std::min(frameBuffer[i].y, 1.0f));
+		imagedata[i * 3 + 2] = 255 * std::max(0.0f, std::min(frameBuffer[i].z, 1.0f));
 	}
 
 	glGenTextures(1, &glTexID);
@@ -384,7 +384,7 @@ void beginRayTrace()
 		box->rotMat = g_boxes[i].rotMat;
 		box->invRotMat = g_boxes[i].invRotMat;
 		
-		//hittables.emplace_back(box);
+		hittables.emplace_back(box);
 	}
 	std::cout << hittables.size() << "\n";
 
