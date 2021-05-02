@@ -49,7 +49,7 @@ GLfloat light0_Amb[] = { 0.4f, 0.3f, 0.3f, 1.0f };
 GLfloat light0_Diff[] = { 0.8f, 0.8f, 0.7f, 1.0f };
 GLfloat light0_Spec[] = { 0.9f, 0.9f, 0.9f, 1.0f };
 
-const char dataFile[128] = "geoData/geo.txt";
+const char dataFile[128] = "src/geoData/geo.txt";
 
 unsigned int g_box_num;
 Box* g_boxes;

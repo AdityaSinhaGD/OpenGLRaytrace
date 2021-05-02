@@ -46,6 +46,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="geoData\geo.txt" />
+    <Text Include="src\geoData\geo.txt" />
   </ItemGroup>
 </Project>

@@ -155,7 +155,7 @@
     <ClInclude Include="src\Text.h" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="geoData\geo.txt" />
+    <Text Include="src\geoData\geo.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
