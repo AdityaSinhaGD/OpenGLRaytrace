@@ -101,8 +101,7 @@ glm::vec3 rayColor(const ray& r, std::vector<std::shared_ptr<hittable>> hittable
 			float diff = std::max(dot(normal, lightDir), 0.0f);//s.n
 			vec3 reflectDir = glm::normalize(glm::reflect(-lightDir, normal));//r
 			vec3 viewDir = glm::normalize(glm::vec3(g_cam.eye.x, g_cam.eye.y, g_cam.eye.z) - closestHit.hitPoint);//v
-			float rdv = pow(dot(viewDir, reflectDir), 50);
-			float spec = std::max(rdv, 0.0f);
+			float spec = pow(std::max(dot(viewDir, reflectDir),0.0f), 50);
 
 			float ia = closestHit.ambient;
 			float id = g_light.intensity * closestHit.diffuse * diff;
@@ -421,7 +420,8 @@ void beginRayTrace()
 
 			auto u = float(i) / (image_width - 1);
 			auto v = float(j) / (image_height - 1);
-			ray r(origin, glm::normalize((lower_left_corner + u * horizontal + v * vertical) - origin));
+			auto rayDirection = glm::normalize((lower_left_corner + u * horizontal + v * vertical) - origin);
+			ray r(origin, rayDirection);
 
 
 			*(pix++) = rayColor(r,hittables);
