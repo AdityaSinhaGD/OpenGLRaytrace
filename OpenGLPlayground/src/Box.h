@@ -122,8 +122,6 @@ public:
 				float t2 = (e + maxPos.x) / f; // Intersection with the "right" plane
 				// t1 and t2 now contain distances betwen ray origin and ray-plane intersections
 
-				// We want t1 to represent the nearest intersection, 
-				// so if it's not the case, invert t1 and t2
 				if (t1 > t2)
 				{
 					float w = t1; t1 = t2; t2 = w; // swap t1 and t2
@@ -136,9 +134,8 @@ public:
 				if (t1 > tMin)
 					tMin = t1;
 
-				// And here's the trick :
+				
 				// If "far" is closer than "near", then there is NO intersection.
-				// See the images in the tutorials for the visual explanation.
 				if (tMax < tMin)
 					return false;
 
@@ -153,7 +150,6 @@ public:
 
 
 		// Test intersection with the 2 planes perpendicular to the OBB's Y axis
-		// Exactly the same thing than above.
 		{
 			glm::vec3 yaxis(ModelMatrix[1].x, ModelMatrix[1].y, ModelMatrix[1].z);
 			float e = glm::dot(yaxis, delta);
@@ -185,7 +181,6 @@ public:
 
 
 		// Test intersection with the 2 planes perpendicular to the OBB's Z axis
-		// Exactly the same thing than above.
 		{
 			glm::vec3 zaxis(ModelMatrix[2].x, ModelMatrix[2].y, ModelMatrix[2].z);
 			float e = glm::dot(zaxis, delta);
@@ -217,9 +212,19 @@ public:
 
 		record.t = tMin;
 		record.hitPoint = r.at(record.t);
-		glm::vec4 normalCalc = invRotMat * glm::vec4(glm::normalize(record.hitPoint - OBBposition_worldspace), 0);
-		glm::vec3 boxNormal = glm::vec3(normalCalc.x, normalCalc.y, normalCalc.z);
-		record.normal = boxNormal;
+		
+		glm::vec3 hitPointAABBSpace = glm::vec3(glm::inverse(ModelMatrix) * glm::vec4(record.hitPoint, 1.0));
+		vec3 c = (minPos + maxPos) * 0.5f;
+		vec3 p = hitPointAABBSpace - c;
+		vec3 d = (minPos - maxPos) * 0.5f;
+		float bias = 1 + 0.001;
+
+		vec3 normal;
+		normal = vec3(int(p.x / abs(d.x) * bias), int(p.y / abs(d.y) * bias), int(p.z / abs(d.z) * bias));
+		normal = vec3(ModelMatrix * vec4(normal, 0.0));
+
+
+		record.normal = glm::normalize(normal);
 		record.ambient = ambient;
 		record.diffuse = diffuse;
 		record.phong = phong;
