@@ -421,7 +421,7 @@ void beginRayTrace()
 
 			auto u = float(i) / (image_width - 1);
 			auto v = float(j) / (image_height - 1);
-			ray r(origin, lower_left_corner + u * horizontal + v * vertical - origin);
+			ray r(origin, glm::normalize((lower_left_corner + u * horizontal + v * vertical) - origin));
 
 
 			*(pix++) = rayColor(r,hittables);
