@@ -99,51 +99,131 @@ public:
 
     bool hit(const ray& r, float t_min, float t_max, hit_record& record) const override
     {
-        float tmin = (minPos.x - r.orig.x) / r.dir.x;
-        float tmax = (maxPos.x - r.orig.x) / r.dir.x;
 
-        if (tmin > tmax) swap(tmin, tmax);
+		mat4 ModelMatrix = rotMat;
 
-        float tymin = (minPos.y - r.orig.y) / r.dir.y;
-        float tymax = (maxPos.y - r.orig.y) / r.dir.y;
+		float tMin = t_min;
+		float tMax = t_max;
 
-        if (tymin > tymax) swap(tymin, tymax);
+		glm::vec3 OBBposition_worldspace(ModelMatrix[3].x, ModelMatrix[3].y, ModelMatrix[3].z);
 
-        if ((tmin > tymax) || (tymin > tmax))
-            return false;
+		glm::vec3 delta = OBBposition_worldspace - r.orig;
 
-        if (tymin > tmin)
-            tmin = tymin;
+		// Test intersection with the 2 planes perpendicular to the OBB's X axis
+		{
+			glm::vec3 xaxis(ModelMatrix[0].x, ModelMatrix[0].y, ModelMatrix[0].z);
+			float e = glm::dot(xaxis, delta);
+			float f = glm::dot(r.dir, xaxis);
 
-        if (tymax < tmax)
-            tmax = tymax;
+			if (fabs(f) > 0.001f)
+			{ // Standard case
 
-        float tzmin = (minPos.z - r.orig.z) / r.dir.z;
-        float tzmax = (maxPos.z - r.orig.z) / r.dir.z;
+				float t1 = (e + minPos.x) / f; // Intersection with the "left" plane
+				float t2 = (e + maxPos.x) / f; // Intersection with the "right" plane
+				// t1 and t2 now contain distances betwen ray origin and ray-plane intersections
 
-        if (tzmin > tzmax) swap(tzmin, tzmax);
+				// We want t1 to represent the nearest intersection, 
+				// so if it's not the case, invert t1 and t2
+				if (t1 > t2)
+				{
+					float w = t1; t1 = t2; t2 = w; // swap t1 and t2
+				}
 
-        if ((tmin > tzmax) || (tzmin > tmax))
-            return false;
+				// tMax is the nearest "far" intersection (amongst the X,Y and Z planes pairs)
+				if (t2 < tMax)
+					tMax = t2;
+				// tMin is the farthest "near" intersection (amongst the X,Y and Z planes pairs)
+				if (t1 > tMin)
+					tMin = t1;
 
-        if (tzmin > tmin)
-            tmin = tzmin;
+				// And here's the trick :
+				// If "far" is closer than "near", then there is NO intersection.
+				// See the images in the tutorials for the visual explanation.
+				if (tMax < tMin)
+					return false;
 
-        if (tzmax < tmax)
-            tmax = tzmax;
-
-        
-        record.t = tmin;
-        record.hitPoint = r.at(record.t);
-        record.normal = (record.hitPoint - (minPos+maxPos)*0.5f);
-        record.normal = glm::normalize(record.normal);
-        record.ambient = ambient;
-        record.diffuse = diffuse;
-        record.phong = phong;
-        record.color = color;
+			}
+			else
+			{ // Rare case : the ray is almost parallel to the planes, so they don't have any "intersection"
+				if (-e + minPos.x > 0.0f || -e + maxPos.x < 0.0f)
+					return false;
+			}
+			record.normal = xaxis;
+		}
 
 
-        return true;
+		// Test intersection with the 2 planes perpendicular to the OBB's Y axis
+		// Exactly the same thing than above.
+		{
+			glm::vec3 yaxis(ModelMatrix[1].x, ModelMatrix[1].y, ModelMatrix[1].z);
+			float e = glm::dot(yaxis, delta);
+			float f = glm::dot(r.dir, yaxis);
+
+			if (fabs(f) > 0.001f)
+			{
+
+				float t1 = (e + minPos.y) / f;
+				float t2 = (e + maxPos.y) / f;
+
+				if (t1 > t2) { float w = t1; t1 = t2; t2 = w; }
+
+				if (t2 < tMax)
+					tMax = t2;
+				if (t1 > tMin)
+					tMin = t1;
+				if (tMin > tMax)
+					return false;
+
+			}
+			else
+			{
+				if (-e + minPos.y > 0.0f || -e + maxPos.y < 0.0f)
+					return false;
+			}
+			record.normal = yaxis;
+		}
+
+
+		// Test intersection with the 2 planes perpendicular to the OBB's Z axis
+		// Exactly the same thing than above.
+		{
+			glm::vec3 zaxis(ModelMatrix[2].x, ModelMatrix[2].y, ModelMatrix[2].z);
+			float e = glm::dot(zaxis, delta);
+			float f = glm::dot(r.dir, zaxis);
+
+			if (fabs(f) > 0.001f)
+			{
+
+				float t1 = (e + minPos.z) / f;
+				float t2 = (e + maxPos.z) / f;
+
+				if (t1 > t2) { float w = t1; t1 = t2; t2 = w; }
+
+				if (t2 < tMax)
+					tMax = t2;
+				if (t1 > tMin)
+					tMin = t1;
+				if (tMin > tMax)
+					return false;
+
+			}
+			else
+			{
+				if (-e + minPos.z > 0.0f || -e + maxPos.z < 0.0f)
+					return false;
+			}
+			record.normal = zaxis;
+		}
+
+		record.t = tMin;
+		record.hitPoint = r.at(record.t);
+		record.normal = glm::normalize(record.normal);
+		record.ambient = ambient;
+		record.diffuse = diffuse;
+		record.phong = phong;
+		record.color = color;
+		return true;
+
     }
     
 };
