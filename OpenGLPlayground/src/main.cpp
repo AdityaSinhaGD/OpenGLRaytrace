@@ -61,15 +61,19 @@ Light g_light;
 
 std::vector<std::shared_ptr<hittable>> hittables;
 
-bool hit_sphere(const glm::vec3& center, double radius, const ray& r)
+bool CalculateShadowRay(ray r, std::vector<std::shared_ptr<hittable>> hittables)
 {
-	//std::cout<<r.direction().x<<" "<<r.direction().y<<" "<<r.direction().z<<std::endl;
-	glm::vec3 oc = r.origin() - center;
-	auto a = dot(r.direction(), r.direction());
-	auto b = 2.0 * glm::dot(oc, r.direction());
-	auto c = dot(oc, oc) - radius * radius;
-	auto discriminant = b * b - 4 * a * c;
-	return (discriminant > 0);
+	hit_record closestHit;
+	closestHit.t = FLT_MAX;
+	bool hit = false;
+	for (auto& hitabble : hittables)
+	{
+		if (hitabble->hit(r, 0.01f, closestHit.t, closestHit))
+		{
+			hit = true;
+		}
+	}
+	return hit;
 }
 
 glm::vec3 rayColor(const ray& r, std::vector<std::shared_ptr<hittable>> hittables)
@@ -86,22 +90,29 @@ glm::vec3 rayColor(const ray& r, std::vector<std::shared_ptr<hittable>> hittable
 	}
 	if (hit)
 	{
-		//todo Calculate Phong
-		vec3 normal = closestHit.normal;//n
-		vec3 lightDir = normalize(g_light.pos - closestHit.hitPoint);//s
-		float diff = std::max(dot(normal, lightDir),0.0f);//s.n
-		vec3 reflectDir = glm::normalize(glm::reflect(-lightDir, normal));//r
-		vec3 viewDir = glm::normalize(glm::vec3(g_cam.eye.x,g_cam.eye.y,g_cam.eye.z) - closestHit.hitPoint);//v
-		float rdv = pow(dot(viewDir, reflectDir), 50);
-		float spec = std::max(rdv,0.0f);
+		ray shadowRay(closestHit.hitPoint, glm::normalize(g_light.pos - closestHit.hitPoint));
+		bool isInShadow = CalculateShadowRay(shadowRay, hittables);
 
-		float ia = closestHit.ambient;
-		float id = g_light.intensity * closestHit.diffuse * diff;
-		float is = g_light.intensity * closestHit.phong * spec;
+		if (!isInShadow)
+		{
+			//todo Calculate Phong
+			vec3 normal = closestHit.normal;//n
+			vec3 lightDir = normalize(g_light.pos - closestHit.hitPoint);//s
+			float diff = std::max(dot(normal, lightDir), 0.0f);//s.n
+			vec3 reflectDir = glm::normalize(glm::reflect(-lightDir, normal));//r
+			vec3 viewDir = glm::normalize(glm::vec3(g_cam.eye.x, g_cam.eye.y, g_cam.eye.z) - closestHit.hitPoint);//v
+			float rdv = pow(dot(viewDir, reflectDir), 50);
+			float spec = std::max(rdv, 0.0f);
 
-		glm::vec3 color = (ia + id) * g_light.color * closestHit.color + is * g_light.color;
+			float ia = closestHit.ambient;
+			float id = g_light.intensity * closestHit.diffuse * diff;
+			float is = g_light.intensity * closestHit.phong * spec;
 
-		return color;
+			glm::vec3 color = (ia + id) * g_light.color * closestHit.color + is * g_light.color;
+
+			return color;
+		}
+		
 
 	}
 	return glm::vec3(0, 0, 0);
@@ -374,7 +385,7 @@ void beginRayTrace()
 		box->rotMat = g_boxes[i].rotMat;
 		box->invRotMat = g_boxes[i].invRotMat;
 		
-		hittables.emplace_back(box);
+		//hittables.emplace_back(box);
 	}
 	std::cout << hittables.size() << "\n";
 
