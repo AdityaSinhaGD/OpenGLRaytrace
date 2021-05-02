@@ -68,7 +68,7 @@ bool CalculateShadowRay(ray r, std::vector<std::shared_ptr<hittable>> hittables)
 	bool hit = false;
 	for (auto& hitabble : hittables)
 	{
-		if (hitabble->hit(r, 0.0001f, closestHit.t, closestHit))
+		if (hitabble->hit(r, 0.001f, closestHit.t, closestHit))
 		{
 			hit = true;
 		}
@@ -83,7 +83,7 @@ glm::vec3 rayColor(const ray& r, std::vector<std::shared_ptr<hittable>> hittable
 	bool hit = false;
 	for (auto& hitabble : hittables)
 	{
-		if (hitabble->hit(r, 0.0001f, closestHit.t, closestHit))
+		if (hitabble->hit(r, 0.001f, closestHit.t, closestHit))
 		{
 			hit = true;
 		}

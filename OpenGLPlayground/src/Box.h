@@ -180,8 +180,7 @@ public:
 				if (-e + minPos.y > 0.0f || -e + maxPos.y < 0.0f)
 					return false;
 			}
-			auto normal = invRotMat * glm::vec4(yaxis, 1);
-			record.normal = glm::vec3(normal.x, normal.y, normal.z);
+
 		}
 
 
@@ -218,7 +217,9 @@ public:
 
 		record.t = tMin;
 		record.hitPoint = r.at(record.t);
-		record.normal = glm::normalize(record.hitPoint- OBBposition_worldspace);
+		glm::vec4 normalCalc = invRotMat * glm::vec4(glm::normalize(record.hitPoint - OBBposition_worldspace), 0);
+		glm::vec3 boxNormal = glm::vec3(normalCalc.x, normalCalc.y, normalCalc.z);
+		record.normal = boxNormal;
 		record.ambient = ambient;
 		record.diffuse = diffuse;
 		record.phong = phong;
