@@ -61,7 +61,7 @@ Light g_light;
 
 std::vector<std::shared_ptr<hittable>> hittables;
 
-bool CalculateShadowRay(ray r, std::vector<std::shared_ptr<hittable>> hittables)
+bool CalculateShadowRay(const ray& r, const std::vector<std::shared_ptr<hittable>>& hittables)
 {
 	hit_record closestHit;
 	closestHit.t = FLT_MAX;
@@ -76,7 +76,7 @@ bool CalculateShadowRay(ray r, std::vector<std::shared_ptr<hittable>> hittables)
 	return hit;
 }
 
-glm::vec3 rayColor(const ray& r, std::vector<std::shared_ptr<hittable>> hittables)
+glm::vec3 rayColor(const ray& r, const std::vector<std::shared_ptr<hittable>>& hittables)
 {
 	hit_record closestHit;
 	closestHit.t = FLT_MAX;
