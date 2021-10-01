@@ -27,7 +27,7 @@ public:
         return dir;
     }
 
-    glm::vec3 at(float t)
+    glm::vec3 at(float t) const
     {
         return orig + dir * t;
     }

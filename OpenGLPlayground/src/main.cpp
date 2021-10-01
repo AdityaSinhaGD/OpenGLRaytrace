@@ -20,6 +20,10 @@
 #include <fstream>
 #include <iostream>
 #include "Ray.h"
+
+#include <vector>
+#include <memory>
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -45,7 +49,7 @@ GLfloat light0_Amb[] = { 0.4f, 0.3f, 0.3f, 1.0f };
 GLfloat light0_Diff[] = { 0.8f, 0.8f, 0.7f, 1.0f };
 GLfloat light0_Spec[] = { 0.9f, 0.9f, 0.9f, 1.0f };
 
-const char dataFile[128] = "geoData/geo.txt";
+const char dataFile[128] = "src/geoData/geo.txt";
 
 unsigned int g_box_num;
 Box* g_boxes;
@@ -55,27 +59,62 @@ Sphere* g_spheres;
 
 Light g_light;
 
-bool hit_sphere(const glm::vec3& center, double radius, const ray& r)
+std::vector<std::shared_ptr<hittable>> hittables;
+
+bool CalculateShadowRay(const ray& r, const std::vector<std::shared_ptr<hittable>>& hittables)
 {
-	//std::cout<<r.direction().x<<" "<<r.direction().y<<" "<<r.direction().z<<std::endl;
-	glm::vec3 oc = r.origin() - center;
-	auto a = dot(r.direction(), r.direction());
-	auto b = 2.0 * glm::dot(oc, r.direction());
-	auto c = dot(oc, oc) - radius * radius;
-	auto discriminant = b * b - 4 * a * c;
-	return (discriminant > 0);
+	hit_record closestHit;
+	closestHit.t = FLT_MAX;
+	bool hit = false;
+	for (auto& hitabble : hittables)
+	{
+		if (hitabble->hit(r, 0.001f, closestHit.t, closestHit))
+		{
+			hit = true;
+		}
+	}
+	return hit;
 }
 
-glm::vec3 rayColor(const ray& r)
+glm::vec3 rayColor(const ray& r, const std::vector<std::shared_ptr<hittable>>& hittables)
 {
-	if (hit_sphere(glm::vec3(g_spheres[0].pos.x,g_spheres[0].pos.y, g_spheres[0].pos.z), g_spheres[0].radius, r))
+	hit_record closestHit;
+	closestHit.t = FLT_MAX;
+	bool hit = false;
+	for (auto& hitabble : hittables)
 	{
-		return glm::vec3(1, 0, 0);
+		if (hitabble->hit(r, 0.001f, closestHit.t, closestHit))
+		{
+			hit = true;
+		}
 	}
-	else
+	if (hit)
 	{
-		return glm::vec3(0, 0, 0);
+		ray shadowRay(closestHit.hitPoint, glm::normalize(g_light.pos - closestHit.hitPoint));
+		bool isInShadow = CalculateShadowRay(shadowRay, hittables);
+
+		if (!isInShadow)
+		{
+			//todo Calculate Phong
+			vec3 normal = closestHit.normal;//n
+			vec3 lightDir = normalize(g_light.pos - closestHit.hitPoint);//s
+			float diff = std::max(dot(normal, lightDir), 0.0f);//s.n
+			vec3 reflectDir = glm::normalize(glm::reflect(-lightDir, normal));//r
+			vec3 viewDir = glm::normalize(glm::vec3(g_cam.eye.x, g_cam.eye.y, g_cam.eye.z) - closestHit.hitPoint);//v
+			float spec = pow(std::max(dot(viewDir, reflectDir),0.0f), 50);
+
+			float ia = closestHit.ambient;
+			float id = g_light.intensity * closestHit.diffuse * diff;
+			float is = g_light.intensity * closestHit.phong * spec;
+
+			glm::vec3 color = (ia + id) * g_light.color * closestHit.color + is * g_light.color;
+
+			return color;
+		}
+		
+
 	}
+	return glm::vec3(0, 0, 0);
 }
 
 float vertices[4 * 2] = { 0,   0,
@@ -98,9 +137,9 @@ void createTexture(glm::vec3* frameBuffer)
 	// assign red color (255, 0 , 0) to each pixel
 	for (int i = 0; i < g_winWidth * g_winHeight; i++)
 	{
-		imagedata[i * 3 + 0] = 255*frameBuffer[i].x; // R
-		imagedata[i * 3 + 1] = 255*frameBuffer[i].y;   // G
-		imagedata[i * 3 + 2] = 255*frameBuffer[i].z;   // B
+		imagedata[i * 3 + 0] = 255 * std::max(0.0f, std::min(frameBuffer[i].x, 1.0f));
+		imagedata[i * 3 + 1] = 255 * std::max(0.0f, std::min(frameBuffer[i].y, 1.0f));
+		imagedata[i * 3 + 2] = 255 * std::max(0.0f, std::min(frameBuffer[i].z, 1.0f));
 	}
 
 	glGenTextures(1, &glTexID);
@@ -321,10 +360,39 @@ void beginRayTrace()
 
 	LoadConfigFile(dataFile);
 
+	for (int i = 0; i < g_sphere_num; i++)
+	{
+		auto sphere = std::make_shared<Sphere>();
+		sphere->pos = g_spheres[i].pos;
+		sphere->radius = g_spheres[i].radius;
+		sphere->color = g_spheres[i].color;
+		sphere->ambient = g_spheres[i].ambient;
+		sphere->diffuse = g_spheres[i].diffuse;
+		sphere->phong = g_spheres[i].phong;
+
+		hittables.emplace_back(sphere);
+	}
+	for (int i = 0; i < g_box_num; i++)
+	{
+		auto box = std::make_shared<Box>();
+		box->minPos = g_boxes[i].minPos;
+		box->maxPos = g_boxes[i].maxPos;
+		box->color = g_boxes[i].color;
+		box->ambient = g_boxes[i].ambient;
+		box->diffuse = g_boxes[i].diffuse;
+		box->phong = g_boxes[i].phong;
+		box->rotMat = g_boxes[i].rotMat;
+		box->invRotMat = g_boxes[i].invRotMat;
+		
+		hittables.emplace_back(box);
+	}
+	std::cout << hittables.size() << "\n";
+
 	//Image Related
 	const auto image_width = g_winWidth;
 	const auto aspect_ratio = 4.0 / 3.0;
 	const auto image_height = static_cast<int>(image_width / aspect_ratio);
+	std::cout << "image height:" << image_height << "\n";
 
 	//Camera Related
 	auto origin = glm::vec3(g_cam.eye.x, g_cam.eye.y, g_cam.eye.z);
@@ -345,36 +413,24 @@ void beginRayTrace()
 	glm::vec3* pix = frameBuffer;
 	std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
-	for (int j = image_height - 1; j >= 0; --j)
+	for (int j = 0; j < image_height; j++)
 	{
-		for (int i = 0; i < image_width; ++i)
+		for (int i = 0; i < image_width; i++)
 		{
 
 			auto u = float(i) / (image_width - 1);
 			auto v = float(j) / (image_height - 1);
-			ray r(origin, lower_left_corner + u * horizontal + v * vertical - origin);
+			auto rayDirection = glm::normalize((lower_left_corner + u * horizontal + v * vertical) - origin);
+			ray r(origin, rayDirection);
 
 
-			*(pix++) = rayColor(r);
+			*(pix++) = rayColor(r,hittables);
 
 			//std::cout << ir << ' ' << ig << ' ' << ib << '\n';
 		}
 	}
-	// Save result to a PPM image (keep these flags if you compile under Windows)
-	std::ofstream ofs("C:/Users/Aditya Sinha/Desktop/out2.ppm", std::ios::out | std::ios::binary);
-	ofs << "P6\n" << image_width << " " << image_height << "\n255\n";
-	for (uint32_t i = 0; i < image_width * image_height; ++i)
-	{
-		
-		char r = 255 * frameBuffer[i].x;
-		char g = 255 * frameBuffer[i].y;
-		char b = 255 * frameBuffer[i].z;
-		ofs << r << g << b;
-	}
-
-	ofs.close();
-
 	createTexture(frameBuffer);
+	delete[] frameBuffer;
 }
 
 
@@ -392,6 +448,15 @@ void display()
 
 	// if need to update imagedata, do it here, before displaying it as a texture on the quad 
 	drawPlane();
+	//for (int i = 0; i < g_sphere_num; i++)
+	//	g_spheres[i].Draw();
+	//for (int i = 0; i < g_box_num; i++)
+	//	g_boxes[i].Draw();
+
+	// displaying the camera
+	//g_cam.drawGrid();
+	//g_cam.drawCoordinateOnScreen(g_winWidth, g_winHeight);
+	//g_cam.drawCoordinate();
 	glutSwapBuffers();
 }
 
